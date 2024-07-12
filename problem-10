@@ -1,0 +1,36 @@
+public class PalindromeChecker {
+    public static boolean isPalindrome(String s) {
+        // Remove non-alphanumeric characters and convert to lowercase
+        String cleanString = s.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+        
+        int left = 0;
+        int right = cleanString.length() - 1;
+        
+        while (left < right) {
+            if (cleanString.charAt(left) != cleanString.charAt(right)) {
+                return false;
+            }
+            left++;
+            right--;
+        }
+        
+        return true;
+    }
+
+    public static void main(String[] args) {
+        // Test cases
+        String[] testStrings = {
+            "A man, a plan, a canal: Panama",
+            "race a car",
+            "Was it a car or a cat I saw?",
+            "Hello, World!",
+            "Madam, I'm Adam",
+            "12321",
+            ""  // Empty string
+        };
+
+        for (String s : testStrings) {
+            System.out.println("\"" + s + "\" is " + (isPalindrome(s) ? "a palindrome" : "not a palindrome"));
+        }
+    }
+}
