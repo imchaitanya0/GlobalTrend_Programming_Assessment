@@ -1,0 +1,122 @@
+import java.util.ArrayList;
+import java.util.List;
+
+public class ConcurrentModificationException {
+    public static void main(String[] args) {
+        List<String> letters = new ArrayList<>();
+        letters.add("A");
+        letters.add("B");
+        letters.add("C");
+        letters.add("D");
+
+        System.out.println("Original list: " + letters);
+
+        for (String letter : letters) {
+            System.out.println("Processing: " + letter);
+            if (letter=="B") {
+                letters.remove(letter);
+            }
+        System.out.println(letters);
+}
+        }
+    }
+//After running the above program we get the concurrent modification error. 
+
+
+/*The ConcurrentModificationException is thrown when a collection is modified while it's being iterated over.
+In this case, we're using an enhanced for loop (for-each loop) to iterate over the ArrayList.
+Internally, this loop uses an iterator.The iterator keeps track of the state of the list at the time the iteration began. 
+When we call ”letters.remove(letter)”, we're modifying the list directly, not through the iterator. 
+This direct modification causes a mismatch between the iterator's understanding of the list's state and the actual state of the list. 
+To prevent potential inconsistencies and unpredictable behavior, Java throws a ConcurrentModificationException. */
+
+//There are several ways to handle this situation:
+//1. Use an Iterator explicitly and its remove() method.
+import java.util.Iterator;
+
+public class ConcurrentModificationFixed1 {
+    public static void main(String[] args) {
+        List<String> letters= new ArrayList<>();
+        letters.add("A");
+        letters.add("B");
+        letters.add("C");
+        letters.add("D");
+
+        System.out.println("Original list: " + letters);
+
+        Iterator<String> iterator = letters.iterator();
+        while (iterator.hasNext()) {
+            String letter= iterator.next();
+            System.out.println("Processing: " + letter);
+            if (letter=="B") {
+                iterator.remove();
+            }
+        }
+
+        System.out.println("Modified list: " + letters);
+    }
+}
+
+//2. Use a for loop with index, iterating backwards.
+public class ConcurrentModificationFixed2 {
+    public static void main(String[] args) {
+        List<String> letters= new ArrayList<>();
+        letters.add("A");
+        letters.add("B");
+        letters.add("C");
+        letters.add("D");
+
+        System.out.println("Original list: " + letters);
+
+        for (int i = letters.size() - 1; i >= 0; i--) {
+            String letter= letters.get(i);
+            System.out.println("Processing: " + letter);
+            if (letter=="B") {
+                letters.remove(i);
+            }
+        }
+
+        System.out.println("Modified list: " + letters);
+    }
+}
+
+//3. Use removeIf() method.
+public class ConcurrentModificationFixed3 {
+    public static void main(String[] args) {
+        List<String> letters= new ArrayList<>();
+        letters.add("A");
+        letters.add("B");
+        letters.add("C");
+        letters.add("D");
+
+        System.out.println("Original list: " + letters);
+
+        letters.removeIf(letter -> letter==”B”);
+
+        System.out.println("Modified list: " + letters);
+    }
+}
+
+//4. Create a copy of the list for iteration.
+public class ConcurrentModificationFixed4 {
+    public static void main(String[] args) {
+        List<String> letters= new ArrayList<>();
+        letters.add("A");
+        letters.add("B");
+        letters.add("C");
+        letters.add("D");
+
+        System.out.println("Original list: " + letters);
+
+        List<String> lettersToRemove = new ArrayList<>();
+        for (String letter: new ArrayList<>(letters)) {
+            System.out.println("Processing: " + letter);
+            if (letter=="B") {
+                lettersToRemove.add(letter);
+            }
+        }
+        letters.removeAll(lettersToRemove);
+
+        System.out.println("Modified list: " + letters);
+    }
+} 
