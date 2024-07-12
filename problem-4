@@ -1,0 +1,75 @@
+import java.util.*;
+
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode(int x) { val = x; }
+}
+
+class Codec {
+    private static final String DELIMITER = ",";
+    private static final String NULL_MARKER = "#";
+
+    // Encodes a tree to a single string.
+    public String serialize(TreeNode root) {
+        if (root == null) return "";
+        StringBuilder sb = new StringBuilder();
+        serializeHelper(root, sb);
+        return sb.toString();
+    }
+
+    private void serializeHelper(TreeNode node, StringBuilder sb) {
+        if (node == null) {
+            sb.append(NULL_MARKER).append(DELIMITER);
+            return;
+        }
+        
+        sb.append(node.val).append(DELIMITER);
+        serializeHelper(node.left, sb);
+        serializeHelper(node.right, sb);
+    }
+
+    // Decodes your encoded data to tree.
+    public TreeNode deserialize(String data) {
+        if (data.isEmpty()) return null;
+        Queue<String> queue = new LinkedList<>(Arrays.asList(data.split(DELIMITER)));
+        return deserializeHelper(queue);
+    }
+
+    private TreeNode deserializeHelper(Queue<String> queue) {
+        String val = queue.poll();
+        if (val.equals(NULL_MARKER)) return null;
+        
+        TreeNode node = new TreeNode(Integer.parseInt(val));
+        node.left = deserializeHelper(queue);
+        node.right = deserializeHelper(queue);
+        return node;
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+        // Create a sample tree
+        TreeNode root = new TreeNode(1);
+        root.left = new TreeNode(2);
+        root.right = new TreeNode(3);
+        root.right.left = new TreeNode(4);
+        root.right.right = new TreeNode(5);
+
+        Codec codec = new Codec();
+        
+        // Serialize the tree
+        String serialized = codec.serialize(root);
+        System.out.println("Serialized tree: " + serialized);
+
+        // Deserialize back to a tree
+        TreeNode deserialized = codec.deserialize(serialized);
+
+        // Verify by serializing again
+        String reserialized = codec.serialize(deserialized);
+        System.out.println("Re-serialized tree: " + reserialized);
+
+        // Check if the original and re-serialized strings match
+        System.out.println("Match: " + serialized.equals(reserialized));
+    }
+}
