@@ -1,0 +1,201 @@
+import java.util.*;
+
+class Interval {
+    int start, end;
+    Interval(int start, int end) {
+        this.start = start;
+        this.end = end;
+    }
+}
+
+class IntervalTreeNode {
+    Interval interval;
+    int max;
+    IntervalTreeNode left, right;
+    boolean isRed;
+
+    IntervalTreeNode(Interval interval) {
+        this.interval = interval;
+        this.max = interval.end;
+        this.isRed = true;
+    }
+}
+
+class IntervalTree {
+    private IntervalTreeNode root;
+
+    private boolean isRed(IntervalTreeNode node) {
+        return node != null && node.isRed;
+    }
+
+    private IntervalTreeNode rotateLeft(IntervalTreeNode h) {
+        IntervalTreeNode x = h.right;
+        h.right = x.left;
+        x.left = h;
+        x.isRed = h.isRed;
+        h.isRed = true;
+        x.max = h.max;
+        h.max = Math.max(h.interval.end, Math.max(h.left != null ? h.left.max : 0, h.right != null ? h.right.max : 0));
+        return x;
+    }
+
+    private IntervalTreeNode rotateRight(IntervalTreeNode h) {
+        IntervalTreeNode x = h.left;
+        h.left = x.right;
+        x.right = h;
+        x.isRed = h.isRed;
+        h.isRed = true;
+        x.max = h.max;
+        h.max = Math.max(h.interval.end, Math.max(h.left != null ? h.left.max : 0, h.right != null ? h.right.max : 0));
+        return x;
+    }
+
+    private void flipColors(IntervalTreeNode h) {
+        h.isRed = !h.isRed;
+        h.left.isRed = !h.left.isRed;
+        h.right.isRed = !h.right.isRed;
+    }
+
+    public void insertInterval(int start, int end) {
+        root = insert(root, new Interval(start, end));
+        root.isRed = false;
+    }
+
+    private IntervalTreeNode insert(IntervalTreeNode h, Interval interval) {
+        if (h == null) return new IntervalTreeNode(interval);
+
+        if (interval.start < h.interval.start) h.left = insert(h.left, interval);
+        else if (interval.start > h.interval.start) h.right = insert(h.right, interval);
+        else h.interval = interval;
+
+        if (isRed(h.right) && !isRed(h.left)) h = rotateLeft(h);
+        if (isRed(h.left) && isRed(h.left.left)) h = rotateRight(h);
+        if (isRed(h.left) && isRed(h.right)) flipColors(h);
+
+        h.max = Math.max(h.interval.end, Math.max(h.left != null ? h.left.max : 0, h.right != null ? h.right.max : 0));
+        return h;
+    }
+
+    public void deleteInterval(int start, int end) {
+        root = delete(root, new Interval(start, end));
+        if (root != null) root.isRed = false;
+    }
+
+    private IntervalTreeNode delete(IntervalTreeNode h, Interval interval) {
+        if (h == null) return null;
+
+        if (interval.start < h.interval.start) {
+            if (!isRed(h.left) && !isRed(h.left.left))
+                h = moveRedLeft(h);
+            h.left = delete(h.left, interval);
+        } else {
+            if (isRed(h.left))
+                h = rotateRight(h);
+            if (interval.start == h.interval.start && interval.end == h.interval.end && h.right == null)
+                return null;
+            if (!isRed(h.right) && !isRed(h.right.left))
+                h = moveRedRight(h);
+            if (interval.start == h.interval.start && interval.end == h.interval.end) {
+                IntervalTreeNode x = min(h.right);
+                h.interval = x.interval;
+                h.right = deleteMin(h.right);
+            } else h.right = delete(h.right, interval);
+        }
+        return balance(h);
+    }
+
+    private IntervalTreeNode moveRedLeft(IntervalTreeNode h) {
+        flipColors(h);
+        if (isRed(h.right.left)) {
+            h.right = rotateRight(h.right);
+            h = rotateLeft(h);
+            flipColors(h);
+        }
+        return h;
+    }
+
+    private IntervalTreeNode moveRedRight(IntervalTreeNode h) {
+        flipColors(h);
+        if (isRed(h.left.left)) {
+            h = rotateRight(h);
+            flipColors(h);
+        }
+        return h;
+    }
+
+    private IntervalTreeNode balance(IntervalTreeNode h) {
+        if (isRed(h.right)) h = rotateLeft(h);
+        if (isRed(h.left) && isRed(h.left.left)) h = rotateRight(h);
+        if (isRed(h.left) && isRed(h.right)) flipColors(h);
+
+        h.max = Math.max(h.interval.end, Math.max(h.left != null ? h.left.max : 0, h.right != null ? h.right.max : 0));
+        return h;
+    }
+
+    private IntervalTreeNode min(IntervalTreeNode x) {
+        if (x.left == null) return x;
+        return min(x.left);
+    }
+
+    private IntervalTreeNode deleteMin(IntervalTreeNode h) {
+        if (h.left == null) return null;
+        if (!isRed(h.left) && !isRed(h.left.left))
+            h = moveRedLeft(h);
+        h.left = deleteMin(h.left);
+        return balance(h);
+    }
+
+    public List<Interval> findOverlappingIntervals(int start, int end) {
+        List<Interval> result = new ArrayList<>();
+        findOverlapping(root, new Interval(start, end), result);
+        return result;
+    }
+
+    private void findOverlapping(IntervalTreeNode node, Interval interval, List<Interval> result) {
+        if (node == null) return;
+
+        if (doOverlap(node.interval, interval)) {
+            result.add(node.interval);
+        }
+
+        if (node.left != null && node.left.max >= interval.start) {
+            findOverlapping(node.left, interval, result);
+        }
+
+        findOverlapping(node.right, interval, result);
+    }
+
+    private boolean doOverlap(Interval a, Interval b) {
+        return a.start <= b.end && b.start <= a.end;
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+        IntervalTree tree = new IntervalTree();
+
+        // Insert intervals
+        tree.insertInterval(17, 19);
+        tree.insertInterval(5, 8);
+        tree.insertInterval(21, 24);
+        tree.insertInterval(4, 8);
+        tree.insertInterval(15, 18);
+        tree.insertInterval(7, 10);
+
+        // Find overlapping intervals
+        List<Interval> overlapping = tree.findOverlappingIntervals(14, 16);
+        System.out.println("Intervals overlapping with [14, 16]:");
+        for (Interval interval : overlapping) {
+            System.out.println("[" + interval.start + ", " + interval.end + "]");
+        }
+
+        // Delete an interval
+        tree.deleteInterval(21, 24);
+
+        // Find overlapping intervals again
+        overlapping = tree.findOverlappingIntervals(20, 22);
+        System.out.println("Intervals overlapping with [20, 22] after deletion:");
+        for (Interval interval : overlapping) {
+            System.out.println("[" + interval.start + ", " + interval.end + "]");
+        }
+    }
+}
